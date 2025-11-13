@@ -43,8 +43,14 @@ class AutoSound {
     }
 
     showAlert(message, soundType = 'alert') {
+        // تشغيل الصوت أولاً ثم فتح الـ Alert
         const soundPlayed = this.playSound(soundType);
-        alert(message);
+        
+        // استخدام setTimeout لتأخير الـ Alert قليلاً حتى يبدأ الصوت
+        setTimeout(() => {
+            alert(message);
+        }, 100);
+        
         return soundPlayed;
     }
 
