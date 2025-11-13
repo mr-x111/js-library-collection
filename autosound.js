@@ -1,10 +1,10 @@
 class AutoSound {
     constructor() {
         this.sounds = {
-            click: 'https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3',
-            alert: 'https://assets.mixkit.co/sfx/preview/mixkit-alert-digital-clock-beep-989.mp3',
-            success: 'https://assets.mixkit.co/sfx/preview/mixkit-success-bell-593.mp3',
-            error: 'https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3'
+            click: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/3.mp3',
+            alert: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/Coda.ogg',
+            success: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/Greetings.ogg',
+            error: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/8.ogg'
         };
         
         this.initialized = false;
