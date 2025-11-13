@@ -8,15 +8,12 @@ class AutoSound {
             notification: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/3.mp3'
         };
         
-        this.originalAlert = null;
         this.initialized = false;
         this.init();
     }
 
     init() {
         if (this.initialized) return;
-        
-        this.overrideAlert();
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
@@ -31,72 +28,52 @@ class AutoSound {
         this.initialized = true;
     }
 
-    overrideAlert() {
-        if (typeof window.alert === 'function') {
-            this.originalAlert = window.alert;
-            window.alert = (message) => {
-                this.playSound('alert');
-                if (this.originalAlert) {
-                    this.originalAlert(message);
-                }
-            };
-        }
-    }
-
     playSound(soundType) {
         try {
             if (this.sounds[soundType]) {
                 const audio = new Audio(this.sounds[soundType]);
                 audio.volume = 0.5;
-                audio.play().catch(e => {
-                    console.log('تعذر تشغيل الصوت:', e);
-                });
+                audio.play().catch(() => {});
+                return true;
             }
+            return false;
         } catch (error) {
-            console.log('خطأ في تشغيل الصوت:', error);
+            return false;
         }
     }
 
     showAlert(message, soundType = 'alert') {
-        this.playSound(soundType);
-        if (this.originalAlert) {
-            this.originalAlert(message);
-        } else {
-            alert(message);
-        }
+        const soundPlayed = this.playSound(soundType);
+        alert(message);
+        return soundPlayed;
     }
 
     showSuccessAlert(message) {
-        this.showAlert(message, 'success');
+        return this.showAlert(message, 'success');
     }
 
     showErrorAlert(message) {
-        this.showAlert(message, 'error');
+        return this.showAlert(message, 'error');
     }
 
     showNotificationAlert(message) {
-        this.showAlert(message, 'notification');
+        return this.showAlert(message, 'notification');
     }
 
     bindEvents() {
         try {
-            const buttons = document.querySelectorAll('button');
-            buttons.forEach(button => {
+            document.querySelectorAll('button').forEach(button => {
                 this.bindElement(button);
             });
 
-            const links = document.querySelectorAll('a');
-            links.forEach(link => {
+            document.querySelectorAll('a').forEach(link => {
                 this.bindElement(link);
             });
 
-            const inputs = document.querySelectorAll('input[type="button"], input[type="submit"]');
-            inputs.forEach(input => {
+            document.querySelectorAll('input[type="button"], input[type="submit"]').forEach(input => {
                 this.bindElement(input);
             });
-        } catch (error) {
-            console.log('خطأ في ربط الأحداث:', error);
-        }
+        } catch (error) {}
     }
 
     bindElement(element) {
@@ -105,55 +82,23 @@ class AutoSound {
         try {
             element.setAttribute('data-sound-bound', 'true');
             
-            const originalClick = element.onclick;
-            element.onclick = (e) => {
+            element.addEventListener('click', () => {
                 this.playSound('click');
-                if (originalClick && typeof originalClick === 'function') {
-                    return originalClick.call(element, e);
-                }
-            };
-
-            element.addEventListener('click', (e) => {
-                if (!element.onclick) {
-                    this.playSound('click');
-                }
             });
-        } catch (error) {
-            console.log('خطأ في ربط العنصر:', error);
-        }
+        } catch (error) {}
     }
 
     observeDOM() {
         try {
-            const observer = new MutationObserver((mutations) => {
-                for (const mutation of mutations) {
-                    for (const node of mutation.addedNodes) {
-                        if (node.nodeType === 1) {
-                            if (node.matches) {
-                                if (node.matches('button') || node.matches('a') || 
-                                    node.matches('input[type="button"]') || node.matches('input[type="submit"]')) {
-                                    this.bindElement(node);
-                                }
-                            }
-                            
-                            if (node.querySelectorAll) {
-                                const elements = node.querySelectorAll('button, a, input[type="button"], input[type="submit"]');
-                                elements.forEach(el => {
-                                    this.bindElement(el);
-                                });
-                            }
-                        }
-                    }
-                }
+            const observer = new MutationObserver(() => {
+                this.bindEvents();
             });
 
             observer.observe(document.body, {
                 childList: true,
                 subtree: true
             });
-        } catch (error) {
-            console.log('خطأ في مراقبة DOM:', error);
-        }
+        } catch (error) {}
     }
 }
 
