@@ -4,9 +4,11 @@ class AutoSound {
             click: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/3.mp3',
             alert: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/Coda.ogg',
             success: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/Greetings.ogg',
-            error: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/8.ogg'
+            error: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/8.ogg',
+            notification: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/F952882EC9C5A20C808B5E578DC899E4.ogg'
         };
         
+        this.originalAlert = window.alert;
         this.initialized = false;
         this.init();
     }
@@ -14,10 +16,7 @@ class AutoSound {
     init() {
         if (this.initialized) return;
         
-        document.addEventListener('DOMContentLoaded', () => {
-            this.bindEvents();
-            this.observeDOM();
-        });
+        this.overrideAlert();
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', this.bindEvents.bind(this));
@@ -25,7 +24,15 @@ class AutoSound {
             this.bindEvents();
         }
         
+        this.observeDOM();
         this.initialized = true;
+    }
+
+    overrideAlert() {
+        window.alert = (message) => {
+            this.playSound('alert');
+            this.originalAlert(message);
+        };
     }
 
     playSound(soundType) {
@@ -40,18 +47,32 @@ class AutoSound {
         }
     }
 
+    showAlert(message, soundType = 'alert') {
+        this.playSound(soundType);
+        alert(message);
+    }
+
+    showSuccessAlert(message) {
+        this.showAlert(message, 'success');
+    }
+
+    showErrorAlert(message) {
+        this.showAlert(message, 'error');
+    }
+
+    showNotificationAlert(message) {
+        this.showAlert(message, 'notification');
+    }
+
     bindEvents() {
-        // ربط الأزرار
         document.querySelectorAll('button').forEach(button => {
             this.bindElement(button);
         });
 
-        // ربط الروابط
         document.querySelectorAll('a').forEach(link => {
             this.bindElement(link);
         });
 
-        // ربط inputs
         document.querySelectorAll('input[type="button"], input[type="submit"]').forEach(input => {
             this.bindElement(input);
         });
@@ -102,7 +123,6 @@ class AutoSound {
     }
 }
 
-// تشغيل المكتبة تلقائياً
 if (typeof window !== 'undefined') {
     window.autoSound = new AutoSound();
 }
