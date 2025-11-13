@@ -5,10 +5,10 @@ class AutoSound {
             alert: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/Coda.ogg',
             success: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/Greetings.ogg',
             error: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/8.ogg',
-            notification: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/F952882EC9C5A20C808B5E578DC899E4.ogg'
+            notification: 'https://github.com/mr-x111/js-library-collection/raw/refs/heads/main/3.mp3'
         };
         
-        this.originalAlert = window.alert;
+        this.originalAlert = null;
         this.initialized = false;
         this.init();
     }
@@ -19,29 +19,39 @@ class AutoSound {
         this.overrideAlert();
         
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', this.bindEvents.bind(this));
+            document.addEventListener('DOMContentLoaded', () => {
+                this.bindEvents();
+                this.observeDOM();
+            });
         } else {
             this.bindEvents();
+            this.observeDOM();
         }
         
-        this.observeDOM();
         this.initialized = true;
     }
 
     overrideAlert() {
-        window.alert = (message) => {
-            this.playSound('alert');
-            this.originalAlert(message);
-        };
+        if (typeof window.alert === 'function') {
+            this.originalAlert = window.alert;
+            window.alert = (message) => {
+                this.playSound('alert');
+                if (this.originalAlert) {
+                    this.originalAlert(message);
+                }
+            };
+        }
     }
 
     playSound(soundType) {
         try {
-            const audio = new Audio(this.sounds[soundType]);
-            audio.volume = 0.5;
-            audio.play().catch(e => {
-                console.log('تعذر تشغيل الصوت:', e);
-            });
+            if (this.sounds[soundType]) {
+                const audio = new Audio(this.sounds[soundType]);
+                audio.volume = 0.5;
+                audio.play().catch(e => {
+                    console.log('تعذر تشغيل الصوت:', e);
+                });
+            }
         } catch (error) {
             console.log('خطأ في تشغيل الصوت:', error);
         }
@@ -49,7 +59,11 @@ class AutoSound {
 
     showAlert(message, soundType = 'alert') {
         this.playSound(soundType);
-        alert(message);
+        if (this.originalAlert) {
+            this.originalAlert(message);
+        } else {
+            alert(message);
+        }
     }
 
     showSuccessAlert(message) {
@@ -65,61 +79,81 @@ class AutoSound {
     }
 
     bindEvents() {
-        document.querySelectorAll('button').forEach(button => {
-            this.bindElement(button);
-        });
+        try {
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(button => {
+                this.bindElement(button);
+            });
 
-        document.querySelectorAll('a').forEach(link => {
-            this.bindElement(link);
-        });
+            const links = document.querySelectorAll('a');
+            links.forEach(link => {
+                this.bindElement(link);
+            });
 
-        document.querySelectorAll('input[type="button"], input[type="submit"]').forEach(input => {
-            this.bindElement(input);
-        });
+            const inputs = document.querySelectorAll('input[type="button"], input[type="submit"]');
+            inputs.forEach(input => {
+                this.bindElement(input);
+            });
+        } catch (error) {
+            console.log('خطأ في ربط الأحداث:', error);
+        }
     }
 
     bindElement(element) {
-        if (element.hasAttribute('data-sound-bound')) return;
+        if (!element || element.hasAttribute('data-sound-bound')) return;
         
-        element.setAttribute('data-sound-bound', 'true');
-        
-        const originalClick = element.onclick;
-        element.onclick = (e) => {
-            this.playSound('click');
-            if (originalClick) originalClick.call(element, e);
-        };
-
-        element.addEventListener('click', (e) => {
-            if (!element.onclick || element.onclick.toString().includes('native')) {
+        try {
+            element.setAttribute('data-sound-bound', 'true');
+            
+            const originalClick = element.onclick;
+            element.onclick = (e) => {
                 this.playSound('click');
-            }
-        }, true);
+                if (originalClick && typeof originalClick === 'function') {
+                    return originalClick.call(element, e);
+                }
+            };
+
+            element.addEventListener('click', (e) => {
+                if (!element.onclick) {
+                    this.playSound('click');
+                }
+            });
+        } catch (error) {
+            console.log('خطأ في ربط العنصر:', error);
+        }
     }
 
     observeDOM() {
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1) {
-                        if (node.matches && (node.matches('button') || node.matches('a') || 
-                            node.matches('input[type="button"]') || node.matches('input[type="submit"]'))) {
-                            this.bindElement(node);
-                        }
-                        
-                        if (node.querySelectorAll) {
-                            node.querySelectorAll('button, a, input[type="button"], input[type="submit"]').forEach(el => {
-                                this.bindElement(el);
-                            });
+        try {
+            const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    for (const node of mutation.addedNodes) {
+                        if (node.nodeType === 1) {
+                            if (node.matches) {
+                                if (node.matches('button') || node.matches('a') || 
+                                    node.matches('input[type="button"]') || node.matches('input[type="submit"]')) {
+                                    this.bindElement(node);
+                                }
+                            }
+                            
+                            if (node.querySelectorAll) {
+                                const elements = node.querySelectorAll('button, a, input[type="button"], input[type="submit"]');
+                                elements.forEach(el => {
+                                    this.bindElement(el);
+                                });
+                            }
                         }
                     }
-                });
+                }
             });
-        });
 
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        } catch (error) {
+            console.log('خطأ في مراقبة DOM:', error);
+        }
     }
 }
 
